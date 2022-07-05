@@ -1,20 +1,32 @@
 package main
 
 import (
-	"net/http"
+	"os/exec"
 
 	"github.com/gin-gonic/gin"
 )
 
 func main() {
-	r := gin.Default()
-	r.GET("/", func (c *gin.Context) {
-		c.String(http.StatusOK, "Hello World!")
+	router := gin.Default()
+
+	router.LoadHTMLGlob("src/views/*")
+
+	router.GET("/", indexHandler)
+	router.GET("/index.html", func(c *gin.Context) {
+		c.Redirect(302, "/")
 	})
-	r.GET("/ping", func(c *gin.Context) {
-		c.JSON(http.StatusOK, gin.H{
-			"message": "pong",
-		})
+	router.GET("/ping", func(c *gin.Context) {
+		cmd := exec.Command("/bin/sh", "src/shellscripts/ping.sh")
+		out, err := cmd.Output()
+		if err != nil {
+			c.HTML(200, "", gin.H{"title": "Maping", "message": out})
+		}
+
 	})
-	r.Run(":80") // listen and serve on 0.0.0.0:8080 (for windows "localhost:8080")
+	router.Run(":80")
+}
+
+func indexHandler(c *gin.Context) {
+    obj := gin.H{"title": "Maping"}
+    c.HTML(200, "index.html", obj)
 }
