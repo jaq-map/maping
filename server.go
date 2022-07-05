@@ -9,20 +9,23 @@ import (
 func main() {
 	router := gin.Default()
 
-	router.LoadHTMLGlob("src/views/*")
+	router.LoadHTMLGlob("src/views/**")
 
 	router.GET("/", indexHandler)
 	router.GET("/index.html", func(c *gin.Context) {
 		c.Redirect(302, "/")
 	})
-	router.GET("/ping", func(c *gin.Context) {
-		cmd := exec.Command("/bin/sh", "src/shellscripts/ping.sh")
-		out, err := cmd.Output()
-		if err != nil {
-			c.HTML(200, "", gin.H{"title": "Maping", "message": out})
-		}
 
+	router.GET("/ping", func(c *gin.Context) {
+		cmd := exec.Command("bash", "-c", "src/shellscripts/ping.sh")
+		out, err := cmd.CombinedOutput()
+		if err != nil {
+			c.JSON(500, gin.H{"error": err.Error()})
+		} else {
+			c.HTML(200, "ping.html", gin.H{"title": "Maping", "message": string(out)})
+		}
 	})
+
 	router.Run(":80")
 }
 
